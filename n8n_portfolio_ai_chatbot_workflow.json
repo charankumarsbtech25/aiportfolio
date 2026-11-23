@@ -1,0 +1,149 @@
+{
+  "name": "Portfolio AI - Financial Analyst Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "portfolio-ai-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e8d4a132-7e9b-4f95-9bf0-101112131415",
+      "name": "Portfolio AI Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "portfolio-ai-chat"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput || $json.message || \"Hello\" }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the Portfolio AI Assistant, an elite institutional quantitative financial analyst and investment advisor.\nYou assist the user with:\n1. Analyzing their portfolio holdings, risk exposure, and P&L.\n2. Markowitz mean-variance optimization, covariance shrinkage, and Sharpe ratio.\n3. Researching worldwide equities (US NASDAQ/NYSE, Europe, Asia, Indian NSE).\n4. Formulating disciplined stop-loss and profit-booking rules.\n\nUser Profile & Active Portfolio Context:\n{{ JSON.stringify($json.context || {}) }}\n\nAlways provide clear, objective, professional financial intelligence. Use markdown tables, bold key metrics, and keep answers concise and actionable."
+        }
+      },
+      "id": "f9e5b243-8f0c-40a6-acf1-212223242526",
+      "name": "AI Quantitative Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "a1b2c3d4-e5f6-47a8-b9c0-313233343536",
+      "name": "OpenAI / LLM Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        460,
+        520
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $('Portfolio AI Webhook Trigger').item.json.sessionId || 'default' }}"
+      },
+      "id": "b2c3d4e5-f6a7-48b9-c0d1-414243444546",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        600,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"reply\": {{ JSON.stringify($json.output) }},\n  \"source\": \"n8n_ai_agent\",\n  \"status\": \"ok\"\n}",
+        "options": {}
+      },
+      "id": "c3d4e5f6-a7b8-49c0-d1e2-515253545556",
+      "name": "Respond to Portfolio AI Website",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Portfolio AI Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Quantitative Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Quantitative Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Portfolio AI Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI / LLM Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Quantitative Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Quantitative Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1b9338b2-5f65-4f36-9b7e-9759d57a3e74",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "portfolio_ai_instance"
+  },
+  "id": "portfolio-ai-chatbot-flow",
+  "tags": []
+}
+
